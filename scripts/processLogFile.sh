@@ -1,16 +1,16 @@
 #!/bin/bash
 
-inputFile=$1
-tallyResultsFile="tallyResultsFile.txt"
+pollLog=$1
+pollerResultsFile="pollerResultsFile.txt"
 
-# Check if the inputFile exists and has the appropriate permissions
-if [ ! -f "$inputFile" ] || [ ! -r "$inputFile" ]; then
-  echo "Error: inputFile does not exist or is not readable."
+# Check if the pollLog exists and has the appropriate permissions
+if [ ! -f "$pollLog" ] || [ ! -r "$pollLog" ]; then
+  echo "Error: pollLog does not exist or is not readable."
   exit 1
 fi
 
-if [ -f "$tallyResultsFile" ]; then
-  rm "$tallyResultsFile"
+if [ -f "$pollerResultsFile" ]; then
+  rm "$pollerResultsFile"
 fi
 
 if [ ! -f "politicalParties.txt" ] || [ ! -r "politicalParties.txt" ]; then
@@ -26,17 +26,17 @@ while read line; do
   voteCounts["$line"]=0
 done < "politicalParties.txt"
 
-# sort the lines of the input file using a key for sorting the fields 1, 2 (name, surname) and delete the duplicates (-u)
-inputFileSorted="inputFileSorted.txt"
-sort -u -k 1,2 "$inputFile" > "$inputFileSorted"
+# sort the lines of the pollLog file using a key for sorting the fields 1, 2 (name, surname) and delete the duplicates (-u)
+pollLogSorted="pollLogSorted.txt"
+sort -u -k 1,2 "$pollLog" > "$pollLogSorted"
 
 while read line; do
   party=$(echo "$line" | awk '{print $3}')
   voteCounts["$party"]=$((voteCounts["$party"] + 1))
-done < "$inputFileSorted"
+done < "$pollLogSorted"
 
-# Iterate over the array and print pairs to the tallyResultsFile
+# Iterate over the array and print pairs to the pollerResultsFile
 for party in "${!voteCounts[@]}"; do
   votes="${voteCounts[$party]}"
-  echo "$party $votes" >> "$tallyResultsFile"
+  echo "$party $votes" >> "$pollerResultsFile"
 done
