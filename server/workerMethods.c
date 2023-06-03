@@ -101,7 +101,7 @@ void print_pollLog(voteNode **pollLog)
     pthread_mutex_lock(&mtx);
     for (int i = 0; pollLog[i] != NULL; i++)
     {
-        printf("name: %svote: %s\n", pollLog[i]->voter_name, pollLog[i]->party);
+        printf("name: %s vote: %s\n", pollLog[i]->voter_name, pollLog[i]->party);
         fflush(stdout);
     }
     pthread_mutex_unlock(&mtx);
@@ -121,7 +121,7 @@ void write_pollLog(voteNode **pollLog)
     pthread_mutex_lock(&mtx);
     for (int i = 0; pollLog[i] != NULL; i++)
     {
-        fprintf(pollLog_file, "%s%s\n", pollLog[i]->voter_name, pollLog[i]->party);
+        fprintf(pollLog_file, "%s %s\n", pollLog[i]->voter_name, pollLog[i]->party);
         fflush(pollLog_file);
     }
     pthread_mutex_unlock(&mtx);
@@ -169,7 +169,7 @@ void write_pollStats(voteNode **pollLog)
 
     for (int i = 0; pollStats[i] != NULL; i++)
     {
-        fprintf(pollStats_file, "%s%d\n", pollStats[i]->party, pollStats[i]->vote_count);
+        fprintf(pollStats_file, "%s %d\n", pollStats[i]->party, pollStats[i]->vote_count);
         fflush(pollStats_file);
     }
     pthread_mutex_unlock(&mtx);
@@ -203,8 +203,6 @@ void free_memory()
 
 void signalHandler(int signal)
 {
-    printf("Received signal SIGINT\n");
-
     pthread_mutex_lock(&terminate_mtx);
     terminate_flag = 1;
     pthread_mutex_unlock(&terminate_mtx);
@@ -218,7 +216,7 @@ void signalHandler(int signal)
             exit(1);
         }
     }
-    print_pollLog(buff.pollLog);
+    // print_pollLog(buff.pollLog);
 
     write_pollLog(buff.pollLog);
     write_pollStats(buff.pollLog);
