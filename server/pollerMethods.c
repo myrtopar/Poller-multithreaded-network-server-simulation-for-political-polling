@@ -44,22 +44,18 @@ int obtain_socket()
     // don't do anything while the buffer is empty. Wait until there is a socket in the buffer to start consuming
     while (buff.connection_count <= 0 && terminate_flag == 0)
     {
-        // printf(">> Thread %ld found buffer empty, about to wait on condition var nonempty\n", pthread_self());
         pthread_cond_wait(&cond_nonempty, &mtx);
-        // printf("after wait, terminate flag: %d", terminate_flag);
     }
 
     if (terminate_flag == 1)
     {
         // printf("thread %ld woke up from broadcast, about to break\n", pthread_self());
         pthread_mutex_unlock(&mtx);
-        return -1;
+        return -2;
     }
 
     // Consuming a socket descriptor from the buffer
-    int clientSocket = buff.buffer[buff.connection_count - 1];
-    buff.buffer[buff.connection_count] = -1;
-    buff.connection_count--;
+    int clientSocket = buff.buffer[--buff.connection_count];
 
     pthread_mutex_unlock(&mtx);
     pthread_cond_signal(&cond_nonfull);
@@ -82,6 +78,7 @@ void place_socket(int socket)
 
     pthread_mutex_unlock(&mtx);
     pthread_cond_signal(&cond_nonempty);
+
     return;
 }
 
@@ -94,13 +91,12 @@ void *masterThread(void *argp)
 
     while (1)
     {
-        clientSocket = accept(server.serverSocket, server.clientptr, &server.clientLength);
-
-        if (clientSocket < 0)
+        if ((clientSocket = accept(server.serverSocket, server.clientptr, &server.clientLength)) < 0)
         {
             perror("Error accepting connection");
             exit(1);
         }
+        // printf("accepted connection with socket %d\n", clientSocket);
         place_socket(clientSocket);
     }
 
@@ -113,7 +109,7 @@ void *workerThread(void *argp)
 
     while (!terminate_flag)
     {
-        if ((clientSocket = obtain_socket()) == -1)
+        if ((clientSocket = obtain_socket()) == -2)
         {
             break;
         }

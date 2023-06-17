@@ -53,13 +53,10 @@ int main(int argc, char *argv[])
         pthread_create(workerThreads + i, NULL, workerThread, NULL);
     }
 
-    // if (pthread_join(master_thread, NULL)) // cannot go below this line while the server is running
-    // {
-    //     perror("pthread join/n");
-    //     exit(1);
-    // }
-    while (1)
+    if (pthread_join(master_thread, NULL)) // cannot go below this line while the server is running
     {
+        perror("pthread join/n");
+        exit(1);
     }
 
     printf("the end\n");

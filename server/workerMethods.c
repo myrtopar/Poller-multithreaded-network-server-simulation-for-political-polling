@@ -29,13 +29,12 @@ void record_vote(char *name, char *vote)
 
 void message_exchange(int clientSocket)
 {
-    char name[256];
-    char vote[256];
+    char name[50];
+    char vote[30];
+    printf("in message exchange with socket %d\n", clientSocket);
 
     // Request the name of the voter
-    const char *name_request = "SEND NAME PLEASE\n";
-    int bytesSent = write(clientSocket, name_request, strlen(name_request));
-    if (bytesSent < 0)
+    if (write(clientSocket, "SEND NAME PLEASE\n", strlen("SEND NAME PLEASE\n")) < 0)
     {
         perror("Failed to send SEND NAME PLEASE to client");
         exit(EXIT_FAILURE);
@@ -43,19 +42,17 @@ void message_exchange(int clientSocket)
 
     // Read the name of the voter
     memset(name, 0, sizeof(name));
-    int bytesRead = read(clientSocket, name, sizeof(name) - 1);
-    if (bytesRead < 0)
+    if (read(clientSocket, name, sizeof(name) - 1) < 0)
     {
         perror("Failed to read from client socket");
         exit(EXIT_FAILURE);
     }
+    printf("received name %s\n", name);
 
     // Check if the person with this name has already voted
     if (search_pollLog(name, buff.pollLog) == true)
     {
-        const char *negative_response = "ALREADY VOTED\n";
-        bytesSent = write(clientSocket, negative_response, strlen(negative_response));
-        if (bytesSent < 0)
+        if (write(clientSocket, "ALREADY VOTED\n", strlen("ALREADY VOTED\n")) < 0)
         {
             perror("Failed to send ALREADY VOTED to client");
             exit(EXIT_FAILURE);
@@ -66,8 +63,7 @@ void message_exchange(int clientSocket)
 
     // Request the vote
     const char *vote_request = "SEND VOTE PLEASE\n";
-    bytesSent = write(clientSocket, vote_request, strlen(vote_request));
-    if (bytesSent < 0)
+    if (write(clientSocket, vote_request, strlen(vote_request)) < 0)
     {
         perror("Failed to send SEND VOTE PLEASE to client");
         exit(EXIT_FAILURE);
@@ -75,24 +71,22 @@ void message_exchange(int clientSocket)
 
     // Read the vote
     memset(vote, 0, sizeof(vote));
-    bytesRead = read(clientSocket, vote, sizeof(vote) - 1);
-    if (bytesRead < 0)
+    if (read(clientSocket, vote, sizeof(vote) - 1) < 0)
     {
         perror("Failed to read from client socket");
         exit(EXIT_FAILURE);
     }
 
-    // Record the vote
-    record_vote(name, vote);
-
     // Final message
-    char *final_message = "VOTE FOR PARTY RECORDED\n";
-    bytesSent = write(clientSocket, final_message, strlen(final_message));
-    if (bytesSent < 0)
+    if (write(clientSocket, "VOTE FOR PARTY RECORDED\n", strlen("VOTE FOR PARTY RECORDED\n")) < 0)
     {
         perror("Failed to send message to client");
         exit(EXIT_FAILURE);
     }
+
+    close(clientSocket);
+    // Record the vote
+    record_vote(name, vote);
     return;
 }
 
@@ -118,13 +112,11 @@ void write_pollLog(voteNode **pollLog)
         exit(1);
     }
 
-    pthread_mutex_lock(&mtx);
     for (int i = 0; pollLog[i] != NULL; i++)
     {
         fprintf(pollLog_file, "%s %s\n", pollLog[i]->voter_name, pollLog[i]->party);
         fflush(pollLog_file);
     }
-    pthread_mutex_unlock(&mtx);
 
     fclose(pollLog_file);
 }
@@ -172,10 +164,8 @@ void write_pollStats(voteNode **pollLog)
         fprintf(pollStats_file, "%s %d\n", pollStats[i]->party, pollStats[i]->vote_count);
         fflush(pollStats_file);
     }
-    pthread_mutex_unlock(&mtx);
 
     fclose(pollStats_file);
-    return;
 }
 
 void free_memory()
@@ -216,11 +206,12 @@ void signalHandler(int signal)
             exit(1);
         }
     }
-    // print_pollLog(buff.pollLog);
+    print_pollLog(buff.pollLog);
 
     write_pollLog(buff.pollLog);
     write_pollStats(buff.pollLog);
     free_memory();
 
+    close(server.serverSocket);
     exit(signal);
 }

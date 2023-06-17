@@ -1,3 +1,5 @@
+#ifndef SERVER
+#define SERVER
 #include <stdio.h>
 #include <sys/wait.h>   /* sockets */
 #include <sys/types.h>  /* sockets */
@@ -79,3 +81,4 @@ void message_exchange(int clientSocket);
 void record_vote(char *name, char *vote);
 
 void signalHandler(int signal);
+#endif

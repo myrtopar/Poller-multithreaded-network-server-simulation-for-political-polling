@@ -24,4 +24,4 @@ debug: poller
 	gdb ./poller 
 
 clean:
-	rm -f poller *.o poll*.txt
+	rm -f poller *.o poll*.txt *stat.txt
